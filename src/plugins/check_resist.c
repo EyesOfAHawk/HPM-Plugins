@@ -45,6 +45,11 @@ BUILDIN(check_resist)
 	int type = script_getnum(st, 2);
 	struct map_session_data *sd = (script_hasdata(st, 3)) ? script->id2sd(st, script_getnum(st, 3)) : script->rid2sd(st);
 
+	if (type < ELE_NEUTRAL || type > ELE_UNDEAD) {
+		ShowDebug("buildin_check_resist: Invalid type specified. Defaulting to 'Ele_Neutral'.\n");
+		type = ELE_NEUTRAL;
+	}
+
 	if (sd != NULL)
 		script_pushint(st, sd->subele[type]);
 	else
