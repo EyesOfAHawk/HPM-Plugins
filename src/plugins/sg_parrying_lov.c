@@ -31,25 +31,30 @@ HPExport struct hplugin_info pinfo = {
 };
 
 // Configuration
-bool lov = true; // Will linked Star Gladiator get Lord of Vermilion? (true/false)
-int lov_lv = 10; // What level Lord of Vermilion will they get? (1-10)
-bool parrying = true; // Will linked Star Gladiator get Parrying? (true/false)
-int parrying_lv = 10; // What level Parrying will they get? (1-10)
+int extra_skill[] = {
+	// Add the skills/levels here
+	// Format: skill_id, skill_lv,
+	WZ_VERMILION, 10,
+	LK_PARRYING, 10
+};
+// End Configuration
 
 void pc_calc_skilltree_clear_post(struct map_session_data *sd)
 {
+	int i, skill_id, skill_lv;
 	nullpo_retv(sd);
 
 	if (sd->sc.count && sd->sc.data[SC_SOULLINK] && sd->sc.data[SC_SOULLINK]->val2 == SL_STAR) {
-		if (lov) {
-			sd->status.skill[WZ_VERMILION].id = WZ_VERMILION;
-			sd->status.skill[WZ_VERMILION].lv = lov_lv;
-			sd->status.skill[WZ_VERMILION].flag = SKILL_FLAG_PERMANENT;
-		}
-		if (parrying) {
-			sd->status.skill[LK_PARRYING].id = LK_PARRYING;
-			sd->status.skill[LK_PARRYING].lv = parrying_lv;
-			sd->status.skill[LK_PARRYING].flag = SKILL_FLAG_PERMANENT;
+		for (i = 0; i < ARRAYLENGTH(extra_skill); i += 2) {
+			skill_id = extra_skill[i];
+			if ((skill_lv = extra_skill[i+1]) > MAX_SKILL_LEVEL)
+				skill_lv = MAX_SKILL_LEVEL;
+
+			if (skill_id > 0 && skill_lv > 0) {
+				sd->status.skill[skill_id].id = skill_id;
+				sd->status.skill[skill_id].lv = skill_lv;
+				sd->status.skill[skill_id].flag = SKILL_FLAG_PERMANENT;
+			}
 		}
 	}
 }
@@ -57,7 +62,7 @@ void pc_calc_skilltree_clear_post(struct map_session_data *sd)
 // This will make it so parrying will ignore weapon requirements for SG
 struct skill_condition skill_get_requirement_post(struct skill_condition req, struct map_session_data *sd, uint16 skill_id, uint16 skill_lv)
 {
-	if (skill_id == LK_PARRYING && sd->sc.count && sd->sc.data[SC_SOULLINK] && sd->sc.data[SC_SOULLINK]->val2 == SL_STAR)
+	if (skill_id == LK_PARRYING && sd != NULL && sd->sc.count && sd->sc.data[SC_SOULLINK] && sd->sc.data[SC_SOULLINK]->val2 == SL_STAR)
 		req.weapon = skill->dbs->db[skill->get_index(NV_BASIC)].weapon;
 	return req;
 }
@@ -69,5 +74,16 @@ HPExport void plugin_init (void)
 	if (SERVER_TYPE == SERVER_TYPE_MAP) {
 		addHookPost(pc, calc_skilltree_clear, pc_calc_skilltree_clear_post);
 		addHookPost(skill, get_requirement, skill_get_requirement_post);
+	}
+}
+
+/* run when server is ready (online) */
+HPExport void server_online (void)
+{
+	if (SERVER_TYPE == SERVER_TYPE_MAP) {
+		if (ARRAYLENGTH(extra_skill) % 2 != 0)
+			ShowWarning("%s: extra_skill[] array size is not configured correctly (must be even - skill_id, skill_lv).\n", pinfo.name);
+		else
+			ShowInfo("'%s' Plugin by Wolfie of BlackoutRO. Version '%s'\n", pinfo.name, pinfo.version);
 	}
 }

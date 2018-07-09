@@ -1,5 +1,7 @@
 # HPM-Plugins
 Plugins by Wolfie.
+* check_resist() (July 10, 2018)
+  * Returns how much resistance a character has to a certain element.
 * SG_PARRYING_LOV (June 19, 2018)
   * Parrying and Lord of Vermilion become usable when a Star Gladiator is Soul Linked.
 * TF_BACKSLIDING (May 8, 2018)
